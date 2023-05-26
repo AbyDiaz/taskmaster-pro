@@ -46,7 +46,8 @@ var saveTasks = function() {
 
 // this is an event with a callback function
 $(".list-group").on("click", "p", function(){
-  console.log(this);
+  var text = $(this).text();
+  console.log(text);
 });
 
 // modal was triggered
