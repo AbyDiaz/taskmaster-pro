@@ -46,24 +46,28 @@ var saveTasks = function() {
   localStorage.setItem("tasks", JSON.stringify(tasks));
 };
 
+// teask text was clicked
 $(".list-group").on("click","p", function() {
   var text = $(this)
   .text()
   .trim();
+  // replace p element with new text area
   var textInput = $("<textarea>")
   .addClass("form-control")
   .val(text);
+  // auto focus new element 
   $(this).replaceWith(textInput);
   textInput.trigger("focus");
 });
 
+// editable field was unfocused
 $(".list-group").on("blur", "textarea", function() {
   // get textareas current value/text
   var text = $(this)
   .val()
   .trim();
 
-  // get the parent ui's id attribute
+  // get status type and position in the list
   var status = $(this)
   .closest(".list-group")
   .attr("id")
@@ -76,7 +80,7 @@ $(".list-group").on("blur", "textarea", function() {
   .closest(".list-group-item")
   .index();
 
-  // unknown values so use variable names as placeholders
+  // update task in array and re-save to local storage 
   tasks[status][index].text = text;
   // tasks is an object
   // tasks status returns an array
@@ -120,7 +124,7 @@ $(".list-group").on("click", "span", function() {
     }
   })
 
-  // automatically focus on new element 
+  // automatically bring up the calendar 
   dateInput.trigger("focus");
 });
 
@@ -133,7 +137,7 @@ $(".list-group").on("change", "input[type='text']", function() {
   .val()
   .trim();
 
-  // get the parent ul's id attribute
+  // get the parent ul's id attribute/ get staus and position in the list
   var status = $(this)
   .closest(".list-group")
   .attr("id")
@@ -148,7 +152,7 @@ $(".list-group").on("change", "input[type='text']", function() {
   tasks[status][index].date = date;
   saveTasks();
 
-  // recreate span element with bootstrap classes
+  // recreate span and insert in place of input element
   var taskSpan = $("<span>")
   .addClass("badge badge-primary badge-pill")
   .text(date);
@@ -161,6 +165,7 @@ $(".list-group").on("change", "input[type='text']", function() {
 });
 
 // .sortable() turned every element with the class list-group into a sortable list
+// enable draggable/sortable feature on list group elements
 $(".card .list-group").sortable ({
   // connectWith links the sortable list with any other lists that have the same class 
   connectWith: $(".card .list-group"),
@@ -170,24 +175,30 @@ $(".card .list-group").sortable ({
   helper: "clone",
   // activate and deactivate triggers oncce for all connected lists as soon as dragging starts and stops
   activate: function(event) {
-    console.log("activate", this);
+    $(this).addClass("dropover");
+    $('.bottom-trash').addClass('bottom-trash-drag');
   },
   deactivate: function(event) {
-    console.log("deactivate", this);
+    $(this).removeClass("dropver");
+    $('.bottom-trash').removeClass('bottom-trash-drag');
   },
   // over and out trigger when dragged item enters or leaves connected list
   over: function(event) {
-    console.log("over", event.target);
+    $(event.target).addClass("dropover-active");
+    $('.bottom-trash').addClass('bottom-trash-active');
   },
   out: function(event) {
-    console.log("out", event.target);
+    $(event.target).removeClass("dropover-active");
+    $('.bottom-trash').removeClass('bottom-trash-active');
   },
   // update triggers when the contents of the have changed.... items reordered, removed, added
   update: function(event) {
     // array to store the task data in
     var tempArr = [];
     // loop over current set of children in sortable list
-    $(this).children().each(function(){
+    $(this)
+    .children()
+    .each(function(){
       var text = $(this)
       .find("p")
       .text()
@@ -216,7 +227,7 @@ $(".card .list-group").sortable ({
   }
 }); 
 
-// for the trash 
+// trash icon can be dropped on to 
 $("#trash").droppable({
   accept: ".card .list-group-item",
   tollerance: "touch",
@@ -233,7 +244,7 @@ $("#trash").droppable({
   }
 });
 
-// for date in modal
+// convert text field into a jQuery date picker
 $('#modalDueDate').datepicker({
   // set min date to be one day from the current day 
   minDate: 1
@@ -241,7 +252,8 @@ $('#modalDueDate').datepicker({
 
 var auditTask = function(taskEl) {
   // get date from task element 
-  var date = $(taskEl).find('span')
+  var date = $(taskEl)
+  .find('span')
   .text()
   .trim();
 
@@ -276,7 +288,7 @@ $("#task-form-modal").on("shown.bs.modal", function() {
 });
 
 // save button in modal was clicked
-$("#task-form-modal .btn-primary").click(function() {
+$("#task-form-modal .btn-save").click(function() {
   // get form values
   var taskText = $("#modalTaskDescription").val();
   var taskDate = $("#modalDueDate").val();
@@ -309,4 +321,8 @@ $("#remove-tasks").on("click", function() {
 // load tasks for the first time
 loadTasks();
 
-
+setInterval(function() {
+  $('.card .list-group-item').each(function(index, el) {
+    auditTask(el);
+  });
+}, (1000 * 60) * 30);
